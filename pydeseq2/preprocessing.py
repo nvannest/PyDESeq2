@@ -1,3 +1,4 @@
+from typing import Literal
 from typing import Tuple
 from typing import Union
 
@@ -8,7 +9,7 @@ import pandas as pd
 def deseq2_norm(
     counts: Union[pd.DataFrame, np.ndarray],
     conditions: Union[pd.DataFrame, np.ndarray] = None,
-    norm_methods: str = "RLE",
+    fit_type: Literal["rle", "mrn"] = "rle",
 ) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.DataFrame, np.ndarray]]:
     """
     Return normalized counts and size_factors.
@@ -40,7 +41,7 @@ def deseq2_norm(
     size_factors : pandas.DataFrame or ndarray
         DESeq2 normalization factors.
     """
-    if norm_methods == "MRN":
+    if fit_type == "mrn":
         return mrn_normalization(counts, conditions)
 
     else:
