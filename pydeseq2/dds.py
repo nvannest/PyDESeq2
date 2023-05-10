@@ -326,7 +326,9 @@ class DeseqDataSet(ad.AnnData):
             )
             self._fit_iterate_size_factors()
         else:
-            self.layers["normed_counts"], self.obsm["size_factors"] = deseq2_norm(self.X)
+            self.layers["normed_counts"], self.obsm["size_factors"] = deseq2_norm(
+                self.X, self.obs
+            )
         end = time.time()
         print(f"... done in {end - start:.2f} seconds.\n")
 
