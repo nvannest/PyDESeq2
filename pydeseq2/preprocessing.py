@@ -88,65 +88,62 @@ def rle_normalization(counts):
     deseq2_counts = counts / size_factors[:, None]
     return deseq2_counts, size_factors
 
-
 def mrn_normalization(counts, conditions):
     """
-    This normalization method stands for Median Ratio Normalization and is
-    described in "Comparison of normalization methods for differential gene
-    expression analysis in RNA-Seq experiments" (Maza et al. 2013). In some
-    cases it is superior to RLE because it results in fewer false positive
-    discoveries of gene expression difference in DE Analysis.
-
-    Most of this code is adapted with permission from Zachary Frair, and was
-    a pythonic version of the MRN supplimental script written in R by
-    Maza et al. 2013.
+    Normalize counts data using the Median Ratio Normalization method.
 
     Parameters
     ----------
-    counts : pandas.DataFrame or ndarray
-        Raw counts. One column per gene, one row per sample.
+    counts : pandas.DataFrame
+        Raw counts. One column per sample, one row per gene.
+    conditions : pandas.Series
+        Conditions for each sample.
 
     Returns
     -------
-    deseq2_counts : pandas.DataFrame or ndarray
-        DESeq2 normalized counts.
-        One column per gene, rows are indexed by sample barcodes.
-
-    size_factors : pandas.DataFrame or ndarray
-        DESeq2 normalization factors.
+    median_ratios : pandas.Series
+        Median ratios for each condition.
+    size_factors : pandas.Series
+        Normalization factors for each sample.
     """
+    def _calculate_mean(counts, conditions, condition):
+        subset = conditions == condition
+        columns = counts.columns[subset]
+        values = []
+        for column in columns:
+            values.append(counts[column].values / totalCounts[column])
+        values = np.array(values).T
+        if len(columns) > 1:
+            return np.mean(values, axis=1)
+        else:
+            return values.flatten()
 
-    if not conditions:
-        raise ValueError(
-            "A Clinical dataframe describing the conditions tested"
-            "must be provided to calculate Median Ratio Normalization (MRN)."
-        )
+    if counts.empty or conditions.empty:
+        raise ValueError("Counts and conditions must not be empty.")
 
-    counts = pd.DataFrame(counts)
+    if len(counts.columns) != len(conditions):
+        raise ValueError("Counts and conditions must have the same length.")
+
     totalCounts = counts.sum(axis=0)
     size_factors = totalCounts
-    medianRatios = pd.Series([1] * len(conditions), index=size_factors.index)
-    if sum(conditions == 1) > 1:
-        meanA = np.mean(
-            counts.loc[:, conditions == 1].values / totalCounts[conditions == 1], axis=1
-        )
-    else:
-        meanA = counts.loc[:, conditions == 1].values / totalCounts[conditions == 1]
-    for i in range(2, max(conditions) + 1):
-        if sum(conditions == i) > 1:
-            meanB = np.mean(
-                counts.loc[:, conditions == i].values / totalCounts[conditions == i],
-                axis=1,
-            )
-        else:
-            meanB = counts.loc[:, conditions == i].values / totalCounts[conditions == i]
+    median_ratios = pd.Series([1] * len(conditions), index=size_factors.index)
+
+    # calculate means for each condition
+    for i in conditions.unique():
+        meanA = _calculate_mean(counts, conditions, 1)
+        meanB = _calculate_mean(counts, conditions, i)
+
         meanANot0 = meanA[(meanA > 0) & (meanB > 0)]
         meanBNot0 = meanB[(meanA > 0) & (meanB > 0)]
         ratios = meanBNot0 / meanANot0
-        medianRatios[conditions == i] = np.median(ratios)
+
+        median_ratios[conditions == i] = np.median(ratios)
         size_factors[conditions == i] = (
-            medianRatios[conditions == i] * totalCounts[conditions == i]
+            median_ratios[conditions == i] * totalCounts[conditions == i]
         )
-    medianRatios = medianRatios / np.exp(np.mean(np.log(medianRatios)))
+
+    # normalize ratios and size_factors
+    median_ratios = median_ratios / np.exp(np.mean(np.log(median_ratios)))
     size_factors = size_factors / np.exp(np.mean(np.log(size_factors)))
-    return medianRatios, size_factors
+
+    return median_ratios, size_factors

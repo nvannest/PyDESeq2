@@ -299,7 +299,7 @@ class DeseqDataSet(ad.AnnData):
 
     def fit_size_factors(
         self,
-        fit_type: Literal["rle", "iterative", "mrn"] = "rle",
+        fit_type: Literal["rle", "mrn", "iterative", ] = "rle",
     ) -> None:
         """Fit sample-wise deseq2 normalization (size) factors.
 
