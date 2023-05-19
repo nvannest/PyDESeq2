@@ -578,7 +578,7 @@ def test_fit_size_factors_with_zeros():
 
     assert dds.obsm.get("size_factors") is not None, "Size factors should not be None"
 
-def test_fit_size_factors_impact():
+def test_fit_size_factors_dimpact():
     """Test the impact of normalization on the counts data"""
     counts_df = load_example_data(
         modality="raw_counts",
@@ -607,6 +607,8 @@ def test_fit_size_factors_impact():
 
     # Compute normalized counts after fit_size_factors
     normed_counts_after = dds.layers.get("normed_counts")
+
+    assert np.any(normed_counts_before != normed_counts_after), "Normalization should change the counts data"
 
     # There should be a significant difference between before and after normalization
     size_factors = dds.obsm.get("size_factors")
