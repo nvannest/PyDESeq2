@@ -106,13 +106,19 @@ def mrn_normalization(counts, conditions):
     size_factors : pandas.Series or numpy.ndarray
         Normalization factors for each sample.
     """
+    # Checking and converting data types if necessary
     pandas_input = isinstance(counts, pd.DataFrame)
 
     if isinstance(counts, np.ndarray):
         counts = pd.DataFrame(counts)
-    if isinstance(conditions, np.ndarray):
+
+    if isinstance(conditions, pd.DataFrame):
+        if conditions.shape[1] != 1:
+            raise ValueError("Conditions dataframe should have only one column.")
+        conditions = conditions.iloc[:, 0]
+    elif isinstance(conditions, np.ndarray):
         conditions = pd.Series(conditions)
-        
+
     if counts.empty or conditions.empty:
         raise ValueError("Counts and conditions must not be empty.")
 
