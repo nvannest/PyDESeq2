@@ -131,12 +131,6 @@ def mrn_normalization(counts, conditions):
         if num_counts != len(conditions):
             raise ValueError("Counts and conditions must have the same length.")
 
-    if counts.size == 0 or conditions.size == 0:
-        raise ValueError("Counts and conditions must not be empty.")
-
-    if len(counts.columns) != len(conditions):
-        raise ValueError("Counts and conditions must have the same length.")
-
     totalCounts = counts.sum(axis=0)
     size_factors = totalCounts
     median_ratios = pd.Series([1] * len(conditions), index=size_factors.index)
