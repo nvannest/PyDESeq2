@@ -121,8 +121,18 @@ def test_mrn_normalization():
     assert size_factors.shape == conditions.shape, "size_factors should have the same shape as conditions."
 
     # Test with empty numpy arrays
-    empty_counts = np.array([])
+    empty_counts = np.empty((0, 0))
     empty_conditions = np.array([])
 
     with pytest.raises(ValueError, match="Counts and conditions must not be empty."):
         mrn_normalization(empty_counts, empty_conditions)
+
+    # Test with empty pandas DataFrame and Series
+    empty_counts_df = pd.DataFrame()
+    empty_conditions_s = pd.Series()
+
+    with pytest.raises(ValueError, match="Counts and conditions must not be empty."):
+        mrn_normalization(empty_counts_df, empty_conditions_s)
+
+
+

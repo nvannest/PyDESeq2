@@ -118,6 +118,19 @@ def mrn_normalization(counts, conditions):
         else:
             return values.flatten()
 
+        if isinstance(counts, np.ndarray):
+            num_counts = counts.shape[1] if len(counts.shape) > 1 else 0
+        elif isinstance(counts, pd.DataFrame):
+            num_counts = len(counts.columns)
+        else:
+            raise TypeError("Counts must be a numpy array or pandas DataFrame.")
+
+        if len(conditions) == 0 or num_counts == 0:
+            raise ValueError("Counts and conditions must not be empty.")
+            
+        if num_counts != len(conditions):
+            raise ValueError("Counts and conditions must have the same length.")
+
     if counts.size == 0 or conditions.size == 0:
         raise ValueError("Counts and conditions must not be empty.")
 
