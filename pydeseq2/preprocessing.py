@@ -112,16 +112,19 @@ def mrn_normalization(counts, conditions):
         counts = pd.DataFrame(counts)
     if isinstance(conditions, np.ndarray):
         conditions = pd.Series(conditions)
-
+        
+    print("Shape of counts after conversion:", counts.shape)  # Debug print
+    print("Length of conditions after conversion:", len(conditions))  # Debug print
+    
     if counts.empty or conditions.empty:
         raise ValueError("Counts and conditions must not be empty.")
-    
-    if len(counts.columns) != len(conditions):
-        raise ValueError("Counts and conditions must have the same length.")
+        
+    print("Shape of counts before checking length:", counts.shape)  # Debug print
+    print("Length of conditions before checking length:", len(conditions))  # Debug print
 
-    totalCounts = counts.sum(axis=0)
-    size_factors = totalCounts
-    median_ratios = pd.Series([1] * len(conditions), index=size_factors.index)
+    if counts.shape[1] != len(conditions):
+        raise ValueError("Counts and conditions must have the same length.")
+    
 
     for i in conditions.unique():
         meanA = _calculate_mean(counts, conditions, 1)
