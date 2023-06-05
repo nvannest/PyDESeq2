@@ -113,18 +113,8 @@ def mrn_normalization(counts, conditions):
     if isinstance(conditions, np.ndarray):
         conditions = pd.Series(conditions)
         
-    print("Shape of counts after conversion:", counts.shape)  # Debug print
-    print("Length of conditions after conversion:", len(conditions))  # Debug print
-    
     if counts.empty or conditions.empty:
         raise ValueError("Counts and conditions must not be empty.")
-        
-    print("Shape of counts before checking length:", counts.shape)  # Debug print
-    print("Length of conditions before checking length:", len(conditions))  # Debug print
-
-    if counts.shape[1] != len(conditions):
-        raise ValueError("Counts and conditions must have the same length.")
-    
 
     for i in conditions.unique():
         meanA = _calculate_mean(counts, conditions, 1)
