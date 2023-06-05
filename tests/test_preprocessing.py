@@ -60,11 +60,11 @@ def test_fit_size_factors_with_zeros():
     counts_df.iloc[0, :] = 0
 
     # Create a DeseqDataSet instance
-    dds = DeseqDataSet(counts=counts_df, clinical=clinical_df)
+    dds = DeseqDataSet(counts=counts_df, clinical=clinical_df, fit_type='rle')
 
     # Should switch to 'iterative' method automatically and raise a warning
     with pytest.warns(RuntimeWarning, match="Every gene contains at least one zero, cannot compute log geometric means. Switching to iterative mode."):
-        dds.fit_size_factors(fit_type='rle')
+        dds.fit_size_factors()
 
     assert dds.obsm.get("size_factors") is not None, "Size factors should not be None"
 
@@ -87,13 +87,13 @@ def test_fit_size_factors_impact():
     conditions = clinical_df["condition"].values
 
     # Create a DeseqDataSet instance
-    dds = DeseqDataSet(counts=counts, clinical=clinical_df)
+    dds = DeseqDataSet(counts=counts, clinical=clinical_df, fit_type='rle')
 
     # Compute normalized counts before fit_size_factors
     normed_counts_before = np.log(counts_df + 1).mean(1)
 
     # Fit size factors
-    dds.fit_size_factors(fit_type='rle')
+    dds.fit_size_factors()
 
     # Compute normalized counts after fit_size_factors
     normed_counts_after = dds.layers.get("normed_counts")
@@ -119,3 +119,10 @@ def test_mrn_normalization():
 
     assert median_ratios.shape == conditions.shape, "median_ratios should have the same shape as conditions."
     assert size_factors.shape == conditions.shape, "size_factors should have the same shape as conditions."
+
+    # Test with empty numpy arrays
+    empty_counts = np.array([])
+    empty_conditions = np.array([])
+
+    with pytest.raises(ValueError, match="Counts and conditions must not be empty."):
+        mrn_normalization(empty_counts, empty_conditions)

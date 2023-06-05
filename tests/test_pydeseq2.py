@@ -574,7 +574,7 @@ def test_fit_size_factors_with_zeros():
 
     # Should switch to 'iterative' method automatically and raise a warning
     with pytest.warns(RuntimeWarning, match="Every gene contains at least one zero, cannot compute log geometric means. Switching to iterative mode."):
-        dds.fit_size_factors(fit_type='rle')
+        dds.fit_size_factors()
 
     assert dds.obsm.get("size_factors") is not None, "Size factors should not be None"
 
@@ -603,7 +603,7 @@ def test_fit_size_factors_dimpact():
     normed_counts_before = np.log(counts_df + 1).mean(1)
 
     # Fit size factors
-    dds.fit_size_factors(fit_type='rle')
+    dds.fit_size_factors()
 
     # Compute normalized counts after fit_size_factors
     normed_counts_after = dds.layers.get("normed_counts")

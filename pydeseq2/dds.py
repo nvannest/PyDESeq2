@@ -169,7 +169,7 @@ class DeseqDataSet(ad.AnnData):
         adata: Optional[ad.AnnData] = None,
         counts: Optional[pd.DataFrame] = None,
         clinical: Optional[pd.DataFrame] = None,
-        fit_type: Literal["rle", "mrn", "iterative", ] = "rle",
+        fit_type: Literal["rle", "mrn", "iterative"] = "rle",
         design_factors: Union[str, List[str]] = "condition",
         ref_level: Optional[List[str]] = None,
         min_mu: float = 0.5,

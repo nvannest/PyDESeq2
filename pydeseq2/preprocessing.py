@@ -118,7 +118,7 @@ def mrn_normalization(counts, conditions):
         else:
             return values.flatten()
 
-    if counts.empty or conditions.empty:
+    if counts.size == 0 or conditions.size == 0:
         raise ValueError("Counts and conditions must not be empty.")
 
     if len(counts.columns) != len(conditions):
