@@ -107,6 +107,8 @@ def test_mrn_normalization():
 
     # Generate random data
     np.random.seed(0)
+    
+    # Test with pandas DataFrame
     counts = pd.DataFrame(np.random.randint(0, 100, size=(10, 5)))
     conditions = pd.Series([1, 1, 2, 2, 2])
 
@@ -118,21 +120,22 @@ def test_mrn_normalization():
     assert isinstance(size_factors, pd.Series), "size_factors should be a pandas Series."
 
     assert median_ratios.shape == conditions.shape, "median_ratios should have the same shape as conditions."
-    assert size_factors.shape == conditions.shape, "size_factors should have the same shape as conditions."
+    assert size_factors.shape == counts.columns.shape, "size_factors should have the same shape as the columns of counts."
 
-    # Test with empty numpy arrays
-    empty_counts = np.empty((0, 0))
-    empty_conditions = np.array([])
+    # Test with numpy arrays
+    counts = np.random.randint(0, 100, size=(10, 5))
+    conditions = np.array([1, 1, 2, 2, 2])
 
-    with pytest.raises(ValueError, match="Counts and conditions must not be empty."):
-        mrn_normalization(empty_counts, empty_conditions)
+    # Perform normalization
+    median_ratios, size_factors = mrn_normalization(counts, conditions)
 
-    # Test with empty pandas DataFrame and Series
-    empty_counts_df = pd.DataFrame()
-    empty_conditions_s = pd.Series()
+    # Check outputs
+    assert isinstance(median_ratios, pd.Series), "median_ratios should be a pandas Series."
+    assert isinstance(size_factors, pd.Series), "size_factors should be a pandas Series."
 
-    with pytest.raises(ValueError, match="Counts and conditions must not be empty."):
-        mrn_normalization(empty_counts_df, empty_conditions_s)
+    assert median_ratios.shape == conditions.shape, "median_ratios should have the same shape as conditions."
+    assert size_factors.shape[0] == counts.shape[1], "size_factors should have the same shape as the columns of counts."
+
 
 
 

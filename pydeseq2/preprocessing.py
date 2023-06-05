@@ -94,63 +94,54 @@ def mrn_normalization(counts, conditions):
 
     Parameters
     ----------
-    counts : pandas.DataFrame
+    counts : pandas.DataFrame or numpy.ndarray
         Raw counts. One column per sample, one row per gene.
-    conditions : pandas.Series
+    conditions : pandas.Series or numpy.ndarray
         Conditions for each sample.
 
     Returns
     -------
-    median_ratios : pandas.Series
+    median_ratios : pandas.Series or numpy.ndarray
         Median ratios for each condition.
-    size_factors : pandas.Series
+    size_factors : pandas.Series or numpy.ndarray
         Normalization factors for each sample.
     """
-    def _calculate_mean(counts, conditions, condition):
-        subset = conditions == condition
-        columns = counts.columns[subset]
-        values = []
-        for column in columns:
-            values.append(counts[column].values / totalCounts[column])
-        values = np.array(values).T
-        if len(columns) > 1:
-            return np.mean(values, axis=1)
-        else:
-            return values.flatten()
+    pandas_input = isinstance(counts, pd.DataFrame)
 
-        if isinstance(counts, np.ndarray):
-            num_counts = counts.shape[1] if len(counts.shape) > 1 else 0
-        elif isinstance(counts, pd.DataFrame):
-            num_counts = len(counts.columns)
-        else:
-            raise TypeError("Counts must be a numpy array or pandas DataFrame.")
+    if isinstance(counts, np.ndarray):
+        counts = pd.DataFrame(counts)
+    if isinstance(conditions, np.ndarray):
+        conditions = pd.Series(conditions)
 
-        if len(conditions) == 0 or num_counts == 0:
-            raise ValueError("Counts and conditions must not be empty.")
-            
-        if num_counts != len(conditions):
-            raise ValueError("Counts and conditions must have the same length.")
+    if counts.empty or conditions.empty:
+        raise ValueError("Counts and conditions must not be empty.")
+    
+    if len(counts.columns) != len(conditions):
+        raise ValueError("Counts and conditions must have the same length.")
 
     totalCounts = counts.sum(axis=0)
     size_factors = totalCounts
     median_ratios = pd.Series([1] * len(conditions), index=size_factors.index)
 
-    # calculate means for each condition
     for i in conditions.unique():
         meanA = _calculate_mean(counts, conditions, 1)
         meanB = _calculate_mean(counts, conditions, i)
-
         meanANot0 = meanA[(meanA > 0) & (meanB > 0)]
         meanBNot0 = meanB[(meanA > 0) & (meanB > 0)]
         ratios = meanBNot0 / meanANot0
 
         median_ratios[conditions == i] = np.median(ratios)
-        size_factors[conditions == i] = (
-            median_ratios[conditions == i] * totalCounts[conditions == i]
-        )
+        size_factors[conditions == i] = median_ratios[conditions == i] * totalCounts[conditions == i]
 
     # normalize ratios and size_factors
     median_ratios = median_ratios / np.exp(np.mean(np.log(median_ratios)))
     size_factors = size_factors / np.exp(np.mean(np.log(size_factors)))
 
+    if not pandas_input:
+        median_ratios = median_ratios.values
+        size_factors = size_factors.values
+
     return median_ratios, size_factors
+
+
+
