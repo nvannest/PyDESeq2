@@ -61,6 +61,13 @@ class DeseqDataSet(ad.AnnData):
     counts : pandas.DataFrame
         Raw counts. One column per gene, rows are indexed by sample barcodes.
 
+    fit_type : str
+        The normalization method to use (default: ``"rle"``). Uses the "Relative Log 
+        Expression" (RLE) method by default or "Median Ratio Normalization": see 
+        :func:`pydeseq2.preprocessing.deseq2_norm`, unless each gene has at least 
+        one sample with zero read counts, in which case it switches to the ``iterative`` 
+        method.
+
     clinical : pandas.DataFrame
         DataFrame containing clinical information.
         Must be indexed by sample barcodes.
@@ -162,6 +169,7 @@ class DeseqDataSet(ad.AnnData):
         adata: Optional[ad.AnnData] = None,
         counts: Optional[pd.DataFrame] = None,
         clinical: Optional[pd.DataFrame] = None,
+        fit_type: Literal["rle", "mrn", "iterative"] = "rle",
         design_factors: Union[str, List[str]] = "condition",
         ref_level: Optional[List[str]] = None,
         min_mu: float = 0.5,
@@ -216,6 +224,7 @@ class DeseqDataSet(ad.AnnData):
             intercept=True,
         )
 
+        self.fit_type = fit_type
         self.min_mu = min_mu
         self.min_disp = min_disp
         self.max_disp = np.maximum(max_disp, self.n_obs)
@@ -297,25 +306,24 @@ class DeseqDataSet(ad.AnnData):
             # for genes that had outliers replaced
             self.refit()
 
-    def fit_size_factors(
-        self, fit_type: Literal["ratio", "iterative"] = "ratio"
-    ) -> None:
+    def fit_size_factors(self) -> None:
         """Fit sample-wise deseq2 normalization (size) factors.
 
-        Uses the median-of-ratios method: see :func:`pydeseq2.preprocessing.deseq2_norm`,
+        Uses the "Relative Log Expression" (RLE) method by default or "Median Ratio
+        Normalization": see :func:`pydeseq2.preprocessing.deseq2_norm`,
         unless each gene has at least one sample with zero read counts, in which case it
         switches to the ``iterative`` method.
 
         Parameters
         ----------
         fit_type : str
-            The normalization method to use (default: ``"ratio"``).
+            The normalization method to use (default: ``"rle"``).
         """
         print("Fitting size factors...")
         start = time.time()
-        if fit_type == "iterative":
+        if self.fit_type == "iterative":
             self._fit_iterate_size_factors()
-        # Test whether it is possible to use median-of-ratios.
+        # Test whether it is possible to use "Relative Log Expression" (RLE).
         elif (self.X == 0).any(0).all():
             # There is at least a zero for each gene
             warnings.warn(
@@ -326,7 +334,9 @@ class DeseqDataSet(ad.AnnData):
             )
             self._fit_iterate_size_factors()
         else:
-            self.layers["normed_counts"], self.obsm["size_factors"] = deseq2_norm(self.X)
+            self.layers["normed_counts"], self.obsm["size_factors"] = deseq2_norm(
+                self.X, self.obs, self.fit_type
+            )
         end = time.time()
         print(f"... done in {end - start:.2f} seconds.\n")
 
